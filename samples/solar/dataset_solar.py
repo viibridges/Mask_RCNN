@@ -18,7 +18,7 @@ def adapt_mvp_path(path):
         # insert nfs/ next to ~/
         path = os.path.expanduser(path)
         home_path = os.path.expanduser('~')
-        return path.replace(home_path, home_path+'/nfs', 1)
+        return path.replace(home_path, '/workspace/nfs', 1)
   
 
 def get_dataset(dataset, mode):
