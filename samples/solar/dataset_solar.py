@@ -10,7 +10,17 @@ import skimage.io, skimage.color
 ROOT_DIR = os.path.abspath("../../")
 sys.path.append(ROOT_DIR)  # To find local version of the library
 from mrcnn import utils, visualize
+
+def adapt_mvp_path(path):
+    if os.path.exists(path):
+        return path
+    else:
+        # insert nfs/ next to ~/
+        path = os.path.expanduser(path)
+        home_path = os.path.expanduser('~')
+        return path.replace(home_path, home_path+'/nfs', 1)
   
+
 def get_dataset(dataset, mode):
     """
     Get dataset object by its name and mode (train/test)
@@ -123,6 +133,7 @@ class SolarDatasetSimple(SolarDatasetBase):
         
         # prepare data
         root_dir = os.path.expanduser("~/data/solar_panel/")
+        root_dir = adapt_mvp_path(root_dir)
         data_dir = os.path.join(root_dir, "images/20190322/")
         split_file  = os.path.join(root_dir, "splits/20190322/{}.csv".format(mode))
         self._prepare_data(data_dir, split_file)
