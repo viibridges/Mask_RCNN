@@ -29,6 +29,9 @@ def get_dataset(dataset, mode):
     elif dataset == 'simple':
         ds = SolarDatasetSimple()
         ds.initialize(mode)
+    elif dataset == 'normal':
+        ds = SolarDatasetSimple()
+        ds.initialize(mode)
     else:
         raise ValueError("No dataset {} with mode {} found.".format(dataset, mode))
     
@@ -134,6 +137,41 @@ class SolarDatasetSimple(SolarDatasetBase):
         # prepare data
         root_dir = os.path.expanduser("~/data/solar_panel/")
         root_dir = adapt_mvp_path(root_dir)
-        data_dir = os.path.join(root_dir, "images/20190322/")
+        data_dir = os.path.join(root_dir, "images/")
         split_file  = os.path.join(root_dir, "splits/20190322/{}.csv".format(mode))
         self._prepare_data(data_dir, split_file)
+
+
+class SolarDataset(SolarDatasetBase):
+    """Simple Solar panel dataset
+    """
+    def initialize(self, mode='train'):
+        """Initialize the dataset, load paths to images and corresponding annotations 
+        """
+        # Add classes
+        self.add_class("shapes", 1, "unknown")
+        self.add_class("shapes", 2, "type0")
+        self.add_class("shapes", 3, "type1")
+        self.add_class("shapes", 4, "type2")
+        
+        # prepare data
+        root_dir = os.path.expanduser("~/data/solar_panel/")
+        root_dir = adapt_mvp_path(root_dir)
+        data_dir = os.path.join(root_dir, "images/")
+        split_file  = os.path.join(root_dir, "splits/20190330/{}.csv".format(mode))
+        self._prepare_data(data_dir, split_file)
+
+
+from tqdm import tqdm
+if __name__ == '__main__':
+    # Training dataset
+    ds = get_dataset('normal', 'train')
+    ds.prepare()
+
+    # try to load 1000 images from the dataset randomly 
+    image_ids = np.random.choice(ds.image_ids, 1000)
+    for image_id in tqdm(image_ids):
+        image = ds.load_image(image_id)
+        mask, class_ids = ds.load_mask(image_id)
+
+    print(image.shape)
