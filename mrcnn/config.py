@@ -213,6 +213,10 @@ class Config(object):
     # Interval (number of epochs) between checkpoints
     CHECKPOINT_EPOCH_INTERVAL = 1
 
+    # Faster R-CNN mode
+    # When enabled, remove the segmentation head during training and testing (no mask output)
+    FASTER_RCNN_MODE = False
+
     def __init__(self):
         """Set values of computed attributes."""
         # Effective batch size

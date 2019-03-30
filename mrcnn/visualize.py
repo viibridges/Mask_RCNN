@@ -157,6 +157,7 @@ def display_instances(image, boxes, masks, class_ids, class_names,
             (mask.shape[0] + 2, mask.shape[1] + 2), dtype=np.uint8)
         padded_mask[1:-1, 1:-1] = mask
         contours = find_contours(padded_mask, 0.5)
+        if not show_mask: contours = []
         for verts in contours:
             # Subtract the padding and flip (y, x) to (x, y)
             verts = np.fliplr(verts) - 1

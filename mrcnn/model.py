@@ -1996,16 +1996,6 @@ class MaskRCNN():
                                      config.POOL_SIZE, config.NUM_CLASSES,
                                      train_bn=config.TRAIN_BN,
                                      fc_layers_size=config.FPN_CLASSIF_FC_LAYERS_SIZE)
-
-            mrcnn_mask = build_fpn_mask_graph(rois, mrcnn_feature_maps,
-                                              input_image_meta,
-                                              config.MASK_POOL_SIZE,
-                                              config.NUM_CLASSES,
-                                              train_bn=config.TRAIN_BN)
-
-            # TODO: clean up (use tf.identify if necessary)
-            output_rois = KL.Lambda(lambda x: x * 1, name="output_rois")(rois)
-
             # Losses
             rpn_class_loss = KL.Lambda(lambda x: rpn_class_loss_graph(*x), name="rpn_class_loss")(
                 [input_rpn_match, rpn_class_logits])
@@ -2015,18 +2005,35 @@ class MaskRCNN():
                 [target_class_ids, mrcnn_class_logits, active_class_ids])
             bbox_loss = KL.Lambda(lambda x: mrcnn_bbox_loss_graph(*x), name="mrcnn_bbox_loss")(
                 [target_bbox, target_class_ids, mrcnn_bbox])
-            mask_loss = KL.Lambda(lambda x: mrcnn_mask_loss_graph(*x), name="mrcnn_mask_loss")(
-                [target_mask, target_class_ids, mrcnn_mask])
+
+            # TODO: clean up (use tf.identify if necessary)
+            output_rois = KL.Lambda(lambda x: x * 1, name="output_rois")(rois)
+
+            if not self.config.FASTER_RCNN_MODE:
+                mrcnn_mask = build_fpn_mask_graph(rois, mrcnn_feature_maps,
+                                                  input_image_meta,
+                                                  config.MASK_POOL_SIZE,
+                                                  config.NUM_CLASSES,
+                                                  train_bn=config.TRAIN_BN)
+                mask_loss = KL.Lambda(lambda x: mrcnn_mask_loss_graph(*x), name="mrcnn_mask_loss")(
+                    [target_mask, target_class_ids, mrcnn_mask])
 
             # Model
             inputs = [input_image, input_image_meta,
                       input_rpn_match, input_rpn_bbox, input_gt_class_ids, input_gt_boxes, input_gt_masks]
             if not config.USE_RPN_ROIS:
                 inputs.append(input_rois)
-            outputs = [rpn_class_logits, rpn_class, rpn_bbox,
-                       mrcnn_class_logits, mrcnn_class, mrcnn_bbox, mrcnn_mask,
-                       rpn_rois, output_rois,
-                       rpn_class_loss, rpn_bbox_loss, class_loss, bbox_loss, mask_loss]
+
+            if self.config.FASTER_RCNN_MODE:
+                outputs = [rpn_class_logits, rpn_class, rpn_bbox,
+                           mrcnn_class_logits, mrcnn_class, mrcnn_bbox,
+                           rpn_rois, output_rois,
+                           rpn_class_loss, rpn_bbox_loss, class_loss, bbox_loss]
+            else:
+                outputs = [rpn_class_logits, rpn_class, rpn_bbox,
+                           mrcnn_class_logits, mrcnn_class, mrcnn_bbox, mrcnn_mask,
+                           rpn_rois, output_rois,
+                           rpn_class_loss, rpn_bbox_loss, class_loss, bbox_loss, mask_loss]
             model = KM.Model(inputs, outputs, name='mask_rcnn')
         else:
             # Network Heads
@@ -2043,18 +2050,23 @@ class MaskRCNN():
             detections = DetectionLayer(config, name="mrcnn_detection")(
                 [rpn_rois, mrcnn_class, mrcnn_bbox, input_image_meta])
 
-            # Create masks for detections
-            detection_boxes = KL.Lambda(lambda x: x[..., :4])(detections)
-            mrcnn_mask = build_fpn_mask_graph(detection_boxes, mrcnn_feature_maps,
-                                              input_image_meta,
-                                              config.MASK_POOL_SIZE,
-                                              config.NUM_CLASSES,
-                                              train_bn=config.TRAIN_BN)
-
-            model = KM.Model([input_image, input_image_meta, input_anchors],
-                             [detections, mrcnn_class, mrcnn_bbox,
-                                 mrcnn_mask, rpn_rois, rpn_class, rpn_bbox],
-                             name='mask_rcnn')
+            if self.config.FASTER_RCNN_MODE:
+                model = KM.Model([input_image, input_image_meta, input_anchors],
+                               [detections, mrcnn_class, mrcnn_bbox,
+                                   rpn_rois, rpn_class, rpn_bbox],
+                               name='mask_rcnn')
+            else:
+                # Create masks for detections
+                detection_boxes = KL.Lambda(lambda x: x[..., :4])(detections)
+                mrcnn_mask = build_fpn_mask_graph(detection_boxes, mrcnn_feature_maps,
+                                                  input_image_meta,
+                                                  config.MASK_POOL_SIZE,
+                                                  config.NUM_CLASSES,
+                                                  train_bn=config.TRAIN_BN)
+                model = KM.Model([input_image, input_image_meta, input_anchors],
+                               [detections, mrcnn_class, mrcnn_bbox,
+                                   mrcnn_mask, rpn_rois, rpn_class, rpn_bbox],
+                               name='mask_rcnn')
 
         # Add multi-GPU support.
         if config.GPU_COUNT > 1:
@@ -2164,7 +2176,9 @@ class MaskRCNN():
         self.keras_model._per_input_losses = {}
         loss_names = [
             "rpn_class_loss",  "rpn_bbox_loss",
-            "mrcnn_class_loss", "mrcnn_bbox_loss", "mrcnn_mask_loss"]
+            "mrcnn_class_loss", "mrcnn_bbox_loss"]
+        if not self.config.FASTER_RCNN_MODE:
+            loss_names += ["mrcnn_mask_loss"]
         for name in loss_names:
             layer = self.keras_model.get_layer(name)
             if layer.output in self.keras_model.losses:
@@ -2521,8 +2535,15 @@ class MaskRCNN():
             log("image_metas", image_metas)
             log("anchors", anchors)
         # Run object detection
-        detections, _, _, mrcnn_mask, _, _, _ =\
-            self.keras_model.predict([molded_images, image_metas, anchors], verbose=0)
+        if self.config.FASTER_RCNN_MODE:
+            detections, _, _, _, _, _ =\
+                self.keras_model.predict([molded_images, image_metas, anchors], verbose=0)
+            mrcnn_mask = np.zeros([detections.shape[0], detections.shape[1],  # (#imgs, #bboxes)
+                    self.config.MASK_SHAPE[0], self.config.MASK_SHAPE[1], self.config.NUM_CLASSES],
+                    dtype=np.bool)  # make a dummy mrcnn_mask prediction to fit the subsequent process
+        else:
+            detections, _, _, mrcnn_mask, _, _, _ =\
+                self.keras_model.predict([molded_images, image_metas, anchors], verbose=0)
         # Process detections
         results = []
         for i, image in enumerate(images):
