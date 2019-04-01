@@ -29,8 +29,8 @@ def get_dataset(dataset, mode):
     elif dataset == 'simple':
         ds = SolarDatasetSimple()
         ds.initialize(mode)
-    elif dataset == 'normal':
-        ds = SolarDatasetSimple()
+    elif dataset == '20190401':
+        ds = SolarDataset()
         ds.initialize(mode)
     else:
         raise ValueError("No dataset {} with mode {} found.".format(dataset, mode))
@@ -61,7 +61,7 @@ class SolarDatasetBase(utils.Dataset):
                     ann_dict = json.load(open(ann_path, 'r'))
                     box_list = ann_dict['shapes']
                     if len(box_list) == 0:
-                        # print('Img %s box_list is 0'%img_path)
+                        print('Img %s box_list is 0'%img_path)
                         continue
                     bboxes = []
                     labels = []
@@ -158,15 +158,18 @@ class SolarDataset(SolarDatasetBase):
         root_dir = os.path.expanduser("~/data/solar_panel/")
         root_dir = adapt_mvp_path(root_dir)
         data_dir = os.path.join(root_dir, "images/")
-        split_file  = os.path.join(root_dir, "splits/20190330/{}.csv".format(mode))
+        split_file  = os.path.join(root_dir, "splits/polycrystal-20190401/{}.csv".format(mode))
         self._prepare_data(data_dir, split_file)
+
 
 
 from tqdm import tqdm
 if __name__ == '__main__':
     # Training dataset
-    ds = get_dataset('normal', 'train')
+    ds = get_dataset('20190401', 'test')
     ds.prepare()
+
+    print("{} images loaded".format(len(ds.image_ids)))
 
     # try to load 1000 images from the dataset randomly 
     image_ids = np.random.choice(ds.image_ids, 1000)
