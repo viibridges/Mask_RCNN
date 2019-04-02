@@ -32,7 +32,7 @@ MODEL_DIR = os.path.abspath("logs")
 #
 # Load configuration
 #
-from solar_config import SolarConfig, SMALL_CONFIG
+from config_solar import SolarConfig, SMALL_CONFIG
 config = SolarConfig()
 config.display()
 
@@ -48,7 +48,7 @@ dataset_train = get_dataset(dataset_name, 'train')
 dataset_train.prepare()
 
 # Validation dataset
-dataset_val = get_dataset(dataset_name, 'test')
+dataset_val = get_dataset(dataset_name, 'val')
 dataset_val.prepare()
 
 
