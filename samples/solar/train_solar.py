@@ -103,7 +103,7 @@ augmenters = iaa.Sequential([
 model.train(dataset_train, dataset_val, 
             learning_rate=config.LEARNING_RATE, 
             augmentation=augmenters,
-            epochs=1 if SMALL_CONFIG else 200, 
+            epochs=2 if SMALL_CONFIG else 200, 
             layers='heads')
 
 
@@ -121,7 +121,7 @@ model.keras_model.save_weights(model_path)
 model.train(dataset_train, dataset_val, 
             learning_rate=config.LEARNING_RATE / 10,
             augmentation=augmenters,
-            epochs=1 if SMALL_CONFIG else 200, 
+            epochs=2 if SMALL_CONFIG else 200, 
             layers="all")
 
 

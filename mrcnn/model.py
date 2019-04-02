@@ -2357,9 +2357,11 @@ class MaskRCNN():
         callbacks = [
             keras.callbacks.TensorBoard(log_dir=self.log_dir,
                                         histogram_freq=0, write_graph=True, write_images=False),
+            # TODO: change monitor quantity to 'val_loss'
             keras.callbacks.ModelCheckpoint(self.checkpoint_path,
                                             verbose=0, save_weights_only=True,
-                                            save_best_only=self.config.SAVE_BEST_ONLY, mode='auto',
+                                            monitor='mrcnn_bbox_loss', mode='min',
+                                            save_best_only=self.config.SAVE_BEST_ONLY,
                                             period=self.config.CHECKPOINT_EPOCH_INTERVAL),
         ]
 
