@@ -69,19 +69,19 @@ def voc_ap(rec, prec):
 
 
 
-def compute_mAP(pred_classes, pred_bboxes, pred_scores, gt_classes, gt_bboxes, verborse=False):
-    APs = compute_ap(pred_classes, pred_bboxes, pred_scores, gt_classes, gt_bboxes, verborse)
+def compute_mAP(pred_classes, pred_bboxes, pred_scores, gt_classes, gt_bboxes, verbose=False):
+    APs = compute_ap(pred_classes, pred_bboxes, pred_scores, gt_classes, gt_bboxes, verbose)
     return sum(APs.values()) / len(APs)
 
 
-def compute_ap(pred_classes, pred_bboxes, pred_scores, gt_classes, gt_bboxes, verborse=False):
+def compute_ap(pred_classes, pred_bboxes, pred_scores, gt_classes, gt_bboxes, verbose=False):
     """ Computer average precision for each class.
         Inputs:
-            pred_classes: [class_name/class_id] * #images. Could be a numpy array or a list of string
-            pred_bboxes: [[x1,y1,x2,y2] *#bboxes] * #images. Could be a 2D numpy array of 4 columns
-            pred_scores: [confidence] * images. Could be a list or 1D numpy array
-            gt_classes: [class_name/class_id] * #images. Could be a numpy array or a list of string
-            gt_bboxes: [[x1,y1,x2,y2] *#bboxes] * #images. Could be a 2D numpy array of 4 columns
+            pred_classes: [[class_name/class_id] * #bboxes] * #images. Element could be a numpy array or a list of string
+            pred_bboxes: [[x1,y1,x2,y2] * #bboxes] * #images. Element could be a list of 2D numpy array of 4 columns
+            pred_scores: [[confidence] * #bboxes] * #images. Element could be a list or 1D numpy array
+            gt_classes: [[class_name/class_id] * #bboxes]] * #images. Element could be a numpy array or a list of string
+            gt_bboxes: [[x1,y1,x2,y2] *#bboxes] * #images. Element could be a 2D numpy array of 4 columns
         Output:
             APs: A dictionary ({'class_name/class_id': the average precision of this class}
     """
@@ -212,7 +212,7 @@ def compute_ap(pred_classes, pred_bboxes, pred_scores, gt_classes, gt_bboxes, ve
 
         ap, mrec, mprec = voc_ap(rec[:], prec[:])
         APs[class_id] = ap
-        if verborse:
+        if verbose:
             print("class '{}' AP: {}%".format(class_id, ap*100))
 
     return APs
@@ -220,28 +220,28 @@ def compute_ap(pred_classes, pred_bboxes, pred_scores, gt_classes, gt_bboxes, ve
 
 
 
-from tqdm import tqdm
-from config_solar import SolarConfig
-from dataset_solar import get_dataset
-import mrcnn.model as modellib
-
 if __name__ == '__main__':
-    ds = get_dataset('20190401', 'test')
-    ds.prepare()
 
-    class InferenceConfig(SolarConfig):
-        GPU_COUNT = 1
-        IMAGES_PER_GPU = 1
-    inference_config = InferenceConfig()
+    pred_classes = [
+        ['apple', 42],
+        [42]
+    ]
+    pred_bboxes = [
+        [[0,0,100,100], [85, 12, 120, 55]], # or np.array([[0,0,100,100], [85, 12, 120, 55]])
+        [[12, 920, 1010, 999]]
+    ]
+    pred_scores = [
+        [.12, .88],
+        [42]
+    ]
+    gt_classes = [
+        [42],
+        [42, 'apple']
+    ]
+    gt_bboxes = [
+        [[5,10,99,105]],
+        [[12, 920, 1010, 999], [12, 920, 1010, 999]]
+    ]
 
-
-    data = []
-    for image_id in tqdm(range(10)):
-        _,_, gt_class_id, gt_bbox, _ =\
-            modellib.load_image_gt(ds, inference_config, image_id, use_mini_mask=False)
-        data.append([['ab']*len(gt_class_id), gt_bbox, gt_class_id, ['ab']*len(gt_class_id), gt_bbox]) 
-    data = list(zip(*data))
-    data.append(True)
-
-    mAP = compute_mAP(*data)
+    mAP = compute_mAP(pred_classes, pred_bboxes, pred_scores, gt_classes, gt_bboxes, verbose=True)
     print(mAP)
