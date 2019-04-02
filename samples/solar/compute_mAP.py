@@ -1,5 +1,5 @@
 import numpy as np
-#from ipdb import set_trace as st
+from ipdb import set_trace as st
 
 '''
     0,0 ------> x (width)
@@ -12,6 +12,11 @@ import numpy as np
   (height)            *
                 (Right,Bottom)
 '''
+
+def yx2xy(yx_bboxes):
+    """ convert yx bboxes (Mask RCNN outputs) to xy bboxes """
+    xy_bboxes = yx_bboxes[:,[1,0,3,2]]
+    return xy_bboxes
 
 
 """

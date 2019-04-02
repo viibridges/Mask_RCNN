@@ -42,7 +42,7 @@ model.load_weights(model_path, by_name=True)
 # Compute VOC-Style mAP @ IoU=0.5
 # Running on 10 images. Increase for better accuracy.
 from tqdm import tqdm
-from compute_mAP import compute_mAP
+from compute_mAP import compute_mAP, yx2xy
 pred_classes, pred_bboxes, pred_scores = [], [], []
 gt_classes, gt_bboxes = [], []
 for image_id in tqdm(ds.image_ids):
@@ -51,13 +51,13 @@ for image_id in tqdm(ds.image_ids):
        modellib.load_image_gt(ds, inference_config,
                                image_id, use_mini_mask=False)
     gt_classes.append(gt_class_id)
-    gt_bboxes.append(gt_bbox)
+    gt_bboxes.append(yx2xy(gt_bbox))
 
     # Run object detection
     results = model.detect([image], verbose=0)
     res = results[0]
     pred_classes.append(res['class_ids'])
-    pred_bboxes.append(res['rois']) 
+    pred_bboxes.append(yx2xy(res['rois'])) 
     pred_scores.append(res['scores'])
     
 mAP = compute_mAP(pred_classes, pred_bboxes, pred_scores, gt_classes, gt_bboxes, verbose=True)
