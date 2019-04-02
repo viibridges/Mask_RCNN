@@ -57,7 +57,7 @@ class SolarConfig(Config):
 
 
     def __init__(self):
-        super(self.__class__, self).__init__()
+        super(SolarConfig, self).__init__()
         if self.SAVE_BEST_ONLY:
             self.CHECKPOINT_EPOCH_INTERVAL = 1000000000
         if SMALL_CONFIG:
