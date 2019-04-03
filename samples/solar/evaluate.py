@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # coding: utf-8
-
 import os
 import sys
 from ipdb import set_trace as st
+import cv2
 
 # Root directory of the project
 ROOT_DIR = os.path.abspath("../../")
@@ -15,13 +15,14 @@ from dataset_solar import get_dataset
 ds = get_dataset('20190401', 'test')
 ds.prepare()
 
+model_dir = 'logs/solar0403'
+
 
 # ## Detection
 
 # load model configuration
 from config_solar import SolarConfig
 config = SolarConfig()
-config.display()
 class InferenceConfig(SolarConfig):
     GPU_COUNT = 1
     IMAGES_PER_GPU = 1
@@ -30,25 +31,68 @@ inference_config = InferenceConfig()
 # Recreate the model in inference mode
 model = modellib.MaskRCNN(mode="inference", 
                           config=inference_config,
-                          model_dir='/tmp')
+                          model_dir='/dev/null')
 
 # Load trained weights
-model_path = "logs/solar0401/complete.h5"
+model_path = os.path.join(model_dir, "complete.h5")
 print("Loading weights from ", model_path)
 model.load_weights(model_path, by_name=True)
 
 
-# ## Evaluation
-# Compute VOC-Style mAP @ IoU=0.5
-# Running on 10 images. Increase for better accuracy.
+def draw_bbox(image, class_ids, bboxes):
+    # define color map
+    cmap = [
+        (255,0,0),
+        (0,255,0),
+        (0,0,255),
+        (255,255,0),
+        (255,0,255),
+        (0,255,255),
+    ]
+    
+    for class_id, bbox in zip(class_ids, bboxes):
+        assert class_id < len(cmap), "Please add more colors to continue"
+        color = cmap[class_id]
+        cv2.rectangle(image, (bbox[0], bbox[1]), (bbox[2], bbox[3]), color, 2)
+
+
+
+from tqdm import tqdm
+from compute_mAP import yx2xy
+import numpy as np
+from imageio import imwrite
+
+result_dir = os.path.join(model_dir, 'results')
+if not os.path.exists(result_dir):
+    os.mkdir(result_dir)
+
+for image_id in tqdm(ds.image_ids):
+    # Load image and ground truth data
+    image, image_meta, gt_class_id, gt_bbox, _ =        modellib.load_image_gt(ds, inference_config,
+                               image_id, use_mini_mask=False)
+    # Run object detection
+    results = model.detect([image], verbose=0)
+    res = results[0]
+    # draw bbox in image
+    image_pred = image.copy()
+    draw_bbox(image, gt_class_id, yx2xy(gt_bbox))
+    draw_bbox(image_pred, res['class_ids'], yx2xy(res['rois']))
+    image_save = np.hstack([image, image_pred])
+    # save image
+    image_name = os.path.basename(ds.image_info[image_id]['path'])
+    save_path = os.path.join(result_dir, image_name)
+    imwrite(save_path, image_save)
+
+
+
+# ## Evaluate mAP
 from tqdm import tqdm
 from compute_mAP import compute_mAP, yx2xy
 pred_classes, pred_bboxes, pred_scores = [], [], []
 gt_classes, gt_bboxes = [], []
 for image_id in tqdm(ds.image_ids):
     # Load image and ground truth data
-    image, _, gt_class_id, gt_bbox, _ = \
-       modellib.load_image_gt(ds, inference_config,
+    image, image_meta, gt_class_id, gt_bbox, _ =        modellib.load_image_gt(ds, inference_config,
                                image_id, use_mini_mask=False)
     gt_classes.append(gt_class_id)
     gt_bboxes.append(yx2xy(gt_bbox))
@@ -59,6 +103,11 @@ for image_id in tqdm(ds.image_ids):
     pred_classes.append(res['class_ids'])
     pred_bboxes.append(yx2xy(res['rois'])) 
     pred_scores.append(res['scores'])
-    
-mAP = compute_mAP(pred_classes, pred_bboxes, pred_scores, gt_classes, gt_bboxes, verbose=True)
-print("mAP: ", mAP)
+
+APs = compute_ap(pred_classes, pred_bboxes, pred_scores, gt_classes, gt_bboxes, verbose=True)
+with open(os.path.join(model_dir, 'mAP.txt'), 'w') as fid:
+    for class_id, ap in APs.items():
+        fid.writelines("class '{}' AP: {:2f}%\n".format(class_id, ap*100))
+    mAP = sum(APs.values()) / len(APs)
+    fid.writelines("mAP: ", mAP)
+
