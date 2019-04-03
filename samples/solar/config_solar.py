@@ -2,6 +2,7 @@
 # Configuration class for solar
 #
 import sys
+import numpy as np
 sys.path.append('../../')  # To find local version of the library
 
 from mrcnn.config import Config
@@ -58,10 +59,13 @@ class SolarConfig(Config):
     FASTER_RCNN_MODE = True
 
     # Number of epochs for head network training
-    TRAIN_HEAD_EPOCHS = 200
+    TRAIN_HEAD_EPOCHS = 100
 
     # Number of epochs for all network training
-    TRAIN_ALL_EPOCHS = 200
+    TRAIN_ALL_EPOCHS = 100
+
+    # Image mean (RGB)
+    MEAN_PIXEL = np.array([169.2, 169.2, 169.2])
 
 
     def __init__(self):
