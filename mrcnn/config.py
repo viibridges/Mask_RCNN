@@ -9,7 +9,6 @@ Written by Waleed Abdulla
 
 import numpy as np
 import os
-import pickle
 
 
 # Base Configuration Class
@@ -253,5 +252,3 @@ class Config(object):
             for a in dir(self):
                 if not a.startswith("__") and not callable(getattr(self, a)):
                     fid.writelines("{:30} {}\n".format(a, getattr(self, a)))
-        with open(path+'.loadable.pb', 'wb') as fid:
-            pickle.dump(self, fid)
