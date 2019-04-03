@@ -8,6 +8,7 @@ Written by Waleed Abdulla
 """
 
 import numpy as np
+import os
 
 
 # Base Configuration Class
@@ -241,3 +242,13 @@ class Config(object):
             if not a.startswith("__") and not callable(getattr(self, a)):
                 print("{:30} {}".format(a, getattr(self, a)))
         print("\n")
+
+    def dump(self, path):
+        """dump Configuration values."""
+        if not os.path.exists(os.path.dirname(path)):
+            os.makedirs(os.path.dirname(path))
+        with open(path, 'w') as fid:
+            fid.writelines("Configurations:\n")
+            for a in dir(self):
+                if not a.startswith("__") and not callable(getattr(self, a)):
+                    fid.writelines("{:30} {}\n".format(a, getattr(self, a)))

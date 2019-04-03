@@ -218,7 +218,7 @@ def compute_ap(pred_classes, pred_bboxes, pred_scores, gt_classes, gt_bboxes, ve
         ap, mrec, mprec = voc_ap(rec[:], prec[:])
         APs[class_id] = ap
         if verbose:
-            print("class '{}' AP: {}%".format(class_id, ap*100))
+            print("class '{}' AP: {:2f}%".format(class_id, ap*100))
 
     return APs
 
