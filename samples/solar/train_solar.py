@@ -58,7 +58,6 @@ dataset_val.prepare()
 model = modellib.MaskRCNN(mode="training", config=config,
                           model_dir=MODEL_DIR)
 
-
 #
 # Which weights to start with?
 #
@@ -128,5 +127,8 @@ model.train(dataset_train, dataset_val,
 # Save weights
 # Typically not needed because callbacks save after every epoch
 # Uncomment to save manually
-model_path = os.path.join(model.logdir, "complete.h5")
+model_path = os.path.join(model.log_dir, "complete.h5")
 model.keras_model.save_weights(model_path)
+
+# save configuration
+config.dump(os.path.join(model.log_dir, 'config.txt'))
