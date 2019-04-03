@@ -214,10 +214,6 @@ class Config(object):
     # Interval (number of epochs) between checkpoints
     CHECKPOINT_EPOCH_INTERVAL = 1
 
-    # Faster R-CNN mode
-    # When enabled, remove the segmentation head during training and testing (no mask output)
-    FASTER_RCNN_MODE = False
-
     def __init__(self):
         """Set values of computed attributes."""
         # Effective batch size
@@ -242,13 +238,3 @@ class Config(object):
             if not a.startswith("__") and not callable(getattr(self, a)):
                 print("{:30} {}".format(a, getattr(self, a)))
         print("\n")
-
-    def dump(self, path):
-        """dump Configuration values."""
-        if not os.path.exists(os.path.dirname(path)):
-            os.makedirs(os.path.dirname(path))
-        with open(path, 'w') as fid:
-            fid.writelines("Configurations:\n")
-            for a in dir(self):
-                if not a.startswith("__") and not callable(getattr(self, a)):
-                    fid.writelines("{:30} {}\n".format(a, getattr(self, a)))

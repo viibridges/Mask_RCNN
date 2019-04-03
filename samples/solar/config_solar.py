@@ -1,8 +1,9 @@
 #
 # Configuration class for solar
 #
-import sys
+import sys, os
 import numpy as np
+import pickle
 sys.path.append('../../')  # To find local version of the library
 
 from mrcnn.config import Config
@@ -67,11 +68,30 @@ class SolarConfig(Config):
     # Image mean (RGB)
     MEAN_PIXEL = np.array([169.2, 169.2, 169.2])
 
-
     def __init__(self):
         super(SolarConfig, self).__init__()
         if self.SAVE_BEST_ONLY:
             self.CHECKPOINT_EPOCH_INTERVAL = 1000000000
+
+    def dump(self, path):
+        """dump Configuration values."""
+        if not os.path.exists(os.path.dirname(path)):
+            os.makedirs(os.path.dirname(path))
+        # dump to txt file
+        with open(path, 'w') as fid:
+            fid.writelines("Configurations:\n")
+            for a in dir(self):
+                if not a.startswith("__") and not callable(getattr(self, a)):
+                    fid.writelines("{:30} {}\n".format(a, getattr(self, a)))
+
+        # dump to pickle binary
+        dic = {}
+        pickle_path = ''.join(path.split('.txt')[:-1]) + '.pb'
+        for a in dir(self):
+            if not a.startswith("__") and not callable(getattr(self, a)):
+                dic[a] = getattr(self, a)
+        with open(pickle_path, 'wb') as fid:
+            pickle.dump(dic, fid)
 
 
 # Test only
@@ -88,3 +108,4 @@ class TestConfig(SolarConfig):
 if __name__ == '__main__':
     config = SolarConfig()
     config.display()
+    config.dump('/tmp/config.txt')
