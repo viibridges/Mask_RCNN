@@ -32,7 +32,7 @@ MODEL_DIR = os.path.abspath("logs")
 #
 # Load configuration
 #
-from config_solar import SolarConfig, SMALL_CONFIG
+from config_solar import SolarConfig
 config = SolarConfig()
 config.display()
 
@@ -102,7 +102,7 @@ augmenters = iaa.Sequential([
 model.train(dataset_train, dataset_val, 
             learning_rate=config.LEARNING_RATE, 
             augmentation=augmenters,
-            epochs=2 if SMALL_CONFIG else 200, 
+            epochs=config.TRAIN_HEAD_EPOCHS,
             layers='heads')
 
 
@@ -120,7 +120,7 @@ model.keras_model.save_weights(model_path)
 model.train(dataset_train, dataset_val, 
             learning_rate=config.LEARNING_RATE / 10,
             augmentation=augmenters,
-            epochs=2 if SMALL_CONFIG else 200, 
+            epochs=config.TRAIN_ALL_EPOCHS,
             layers="all")
 
 

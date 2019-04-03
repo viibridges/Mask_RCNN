@@ -6,8 +6,6 @@ sys.path.append('../../')  # To find local version of the library
 
 from mrcnn.config import Config
 
-SMALL_CONFIG=False   # test only when set it true
-
 class SolarConfig(Config):
     """Configuration for training on the toy shapes dataset.
     Derives from the base Config class and overrides values specific
@@ -56,21 +54,31 @@ class SolarConfig(Config):
     # This value will override CHECKPOINT_EPOCH_INTERVAL
     SAVE_BEST_ONLY=False 
     
-    # faster rcnn mode
+    # Faster rcnn mode
     FASTER_RCNN_MODE = True
+
+    # Number of epochs for head network training
+    TRAIN_HEAD_EPOCHS = 200
+
+    # Number of epochs for all network training
+    TRAIN_ALL_EPOCHS = 200
 
 
     def __init__(self):
         super(SolarConfig, self).__init__()
         if self.SAVE_BEST_ONLY:
             self.CHECKPOINT_EPOCH_INTERVAL = 1000000000
-        if SMALL_CONFIG:
-            self.IMAGE_MIN_DIM = 256
-            self.IMAGE_MAX_DIM = 256
-            self.RPN_ANCHOR_SCALES = (16, 32, 64)
-            self.VALIDATION_STEPS = 1
-            self.STEPS_PER_EPOCH = 2
 
+
+# Test only
+class TestConfig(SolarConfig):
+    IMAGE_MIN_DIM = 256
+    IMAGE_MAX_DIM = 256
+    RPN_ANCHOR_SCALES = (16, 32, 64)
+    VALIDATION_STEPS = 1
+    STEPS_PER_EPOCH = 2
+    TRAIN_HEAD_EPOCHS = 2
+    TRAIN_ALL_EPOCHS = 2
 
 
 if __name__ == '__main__':
