@@ -110,7 +110,7 @@ model.train(dataset_train, dataset_val,
 # Save weights
 # Typically not needed because callbacks save after every epoch
 # Uncomment to save manually
-model_path = os.path.join(MODEL_DIR, "headonly.h5")
+model_path = os.path.join(model.log_dir, "headonly.h5")
 model.keras_model.save_weights(model_path)
 
 
@@ -128,5 +128,5 @@ model.train(dataset_train, dataset_val,
 # Save weights
 # Typically not needed because callbacks save after every epoch
 # Uncomment to save manually
-model_path = os.path.join(MODEL_DIR, "complete.h5")
+model_path = os.path.join(model.logdir, "complete.h5")
 model.keras_model.save_weights(model_path)
