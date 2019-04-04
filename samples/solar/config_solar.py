@@ -105,7 +105,19 @@ class TestConfig(SolarConfig):
     TRAIN_ALL_EPOCHS = 2
 
 
+def load_config_obj(path):
+    with open(path, 'rb') as fid:
+        dic = pickle.load(fid)
+    # convert dictionary to a config class
+    obj = Config()
+    for var, val in dic.items():
+        setattr(obj, var, val)
+    return obj
+
+
 if __name__ == '__main__':
     config = SolarConfig()
-    config.display()
     config.dump('/tmp/config.txt')
+
+    config_loaded = load_config_obj('/tmp/config.pb')
+    config_loaded.display()
