@@ -32,17 +32,40 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser() 
     parser.add_argument('--model_dir', required=True)
     parser.add_argument('--model', required=False, help="path to your model")
+    parser.add_argument('--config_file', required=False, help="path to your config.pb")
     parser.add_argument('--dataset', required=False, default='20190401')
     parser.add_argument('--dataset_mode', required=False, default='test')
 
     args = parser.parse_args()
     model_dir = args.model_dir
-    if not hasattr(args, 'model'):
-        model_path = os.path.join(model_dir, 'complete.h5')
-    else:
+    if args.model:
         model_path = args.model
+    else:
+        model_path = os.path.join(model_dir, 'complete.h5')
     dataset = args.dataset
     dataset_mode = args.dataset_mode
+    # load model configuration
+    from config_solar import SolarConfig, load_config_obj
+    if args.config_file:
+        inference_config = load_config_obj(args.config_file)
+        inference_config.GPU_COUNT = 1
+        inference_config.IMAGES_PER_GPU = 1
+        inference_config.BATCH_SIZE = inference_config.IMAGES_PER_GPU * inference_config.GPU_COUNT
+        print("load config file from '{}'".format(args.config_file))
+    else:
+        config_file = os.path.join(model_dir, 'config.pb')
+        if os.path.exists(config_file):
+            inference_config = load_config_obj(config_file)
+            inference_config.GPU_COUNT = 1
+            inference_config.IMAGES_PER_GPU = 1
+            inference_config.BATCH_SIZE = inference_config.IMAGES_PER_GPU * inference_config.GPU_COUNT
+            print("load config file from '{}'".format(config_file))
+        else:
+            class InferenceConfig(SolarConfig):
+                GPU_COUNT = 1
+                IMAGES_PER_GPU = 1
+            inference_config = InferenceConfig()
+    inference_config.display()
 
     # Root directory of the project
     ROOT_DIR = os.path.abspath("../../")
@@ -56,12 +79,6 @@ if __name__ == '__main__':
 
     # ## Detection
 
-    # load model configuration
-    from config_solar import SolarConfig
-    class InferenceConfig(SolarConfig):
-        GPU_COUNT = 1
-        IMAGES_PER_GPU = 1
-    inference_config = InferenceConfig()
 
     # Recreate the model in inference mode
     model = modellib.MaskRCNN(mode="inference", 
@@ -111,3 +128,4 @@ if __name__ == '__main__':
             fid.writelines("class '{}' AP: {:2f}%\n".format(class_id, ap*100))
         mAP = sum(APs.values()) / len(APs)
         fid.writelines("mAP: {:2f}%".format(mAP*100))
+        print("mAP: {:2f}%".format(mAP*100))
