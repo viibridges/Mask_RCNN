@@ -49,13 +49,6 @@ class SolarConfig(Config):
     # use small validation steps since the epoch is small
     VALIDATION_STEPS = 50
     
-    # Interval (number of epochs) between checkpoints 
-    CHECKPOINT_EPOCH_INTERVAL = 100  # disable it and save the weights in the end
-
-    # Only save the graph weights that achieve the best results in validation set
-    # This value will override CHECKPOINT_EPOCH_INTERVAL
-    SAVE_BEST_ONLY=False 
-    
     # Faster rcnn mode
     FASTER_RCNN_MODE = True
 

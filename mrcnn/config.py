@@ -213,6 +213,13 @@ class Config(object):
 
     # Interval (number of epochs) between checkpoints
     CHECKPOINT_EPOCH_INTERVAL = 1
+    
+    # Only save the graph weights that achieve the best results in validation set
+    # This value will override CHECKPOINT_EPOCH_INTERVAL
+    SAVE_BEST_ONLY=False 
+
+    # Faster rcnn mode
+    FASTER_RCNN_MODE = False
 
     def __init__(self):
         """Set values of computed attributes."""
