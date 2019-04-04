@@ -125,7 +125,7 @@ if __name__ == '__main__':
     APs = compute_ap(pred_classes, pred_bboxes, pred_scores, gt_classes, gt_bboxes, verbose=True)
     with open(os.path.join(result_dir, 'mAP.txt'), 'w') as fid:
         for class_id, ap in APs.items():
-            fid.writelines("class '{}' AP: {:2f}%\n".format(class_id, ap*100))
+            fid.writelines("class '{}' AP: {:2f}%\n".format(ds.class_names[class_id], ap*100))
         mAP = sum(APs.values()) / len(APs)
         fid.writelines("mAP: {:2f}%".format(mAP*100))
         print("mAP: {:2f}%".format(mAP*100))

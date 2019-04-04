@@ -26,9 +26,6 @@ def get_dataset(dataset, mode):
     Get dataset object by its name and mode (train/test)
     """
     if None: pass 
-    elif dataset == 'simple':
-        ds = SolarDatasetSimple()
-        ds.initialize(mode)
     elif dataset == '20190401':
         ds = SolarDataset()
         ds.initialize(mode)
@@ -122,26 +119,6 @@ class SolarDatasetBase(utils.Dataset):
     
     
     
-class SolarDatasetSimple(SolarDatasetBase):
-    """Simple Solar panel dataset
-    """
-    def initialize(self, mode='train'):
-        """Initialize the dataset, load paths to images and corresponding annotations 
-        """
-        # Add classes
-        self.add_class("shapes", 1, "unknown")
-        self.add_class("shapes", 2, "type0")
-        self.add_class("shapes", 3, "type1")
-        self.add_class("shapes", 4, "type2")
-        
-        # prepare data
-        root_dir = os.path.expanduser("~/data/solar_panel/")
-        root_dir = adapt_mvp_path(root_dir)
-        data_dir = os.path.join(root_dir, "images/")
-        split_file  = os.path.join(root_dir, "splits/20190322/{}.csv".format(mode))
-        self._prepare_data(data_dir, split_file)
-
-
 class SolarDataset(SolarDatasetBase):
     """Simple Solar panel dataset
     """
@@ -150,9 +127,9 @@ class SolarDataset(SolarDatasetBase):
         """
         # Add classes
         self.add_class("shapes", 1, "unknown")
-        self.add_class("shapes", 2, "type0")
-        self.add_class("shapes", 3, "type1")
-        self.add_class("shapes", 4, "type2")
+        self.add_class("shapes", 2, "fragment")
+        self.add_class("shapes", 3, "x_crack")
+        self.add_class("shapes", 4, "line_crack")
         
         # prepare data
         root_dir = os.path.expanduser("~/data/solar_panel/")
